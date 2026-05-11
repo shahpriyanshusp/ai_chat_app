@@ -36,6 +36,6 @@ void main() {
   testWidgets('App loads', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Actual Chat'), findsOneWidget);
   });
 }
