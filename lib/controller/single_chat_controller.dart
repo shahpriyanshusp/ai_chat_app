@@ -1,4 +1,3 @@
-import 'package:ai_chat_app/database/app_database.dart';
 import 'package:ai_chat_app/database/services/message_services.dart';
 import 'package:ai_chat_app/domain/entities/single_chat.dart';
 

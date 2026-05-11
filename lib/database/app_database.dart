@@ -1,7 +1,5 @@
 import 'dart:io';
-import 'package:ai_chat_app/data/models/response/single_chat_message.dart';
 import 'package:ai_chat_app/database/tabels/chats_table.dart';
-import 'package:ai_chat_app/domain/entities/single_chat.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
