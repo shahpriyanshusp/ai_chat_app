@@ -1,7 +1,11 @@
-import 'package:ai_chat_app/controller/chat_list_controller.dart';
 import 'package:ai_chat_app/domain/entities/chats_system.dart';
+import 'package:ai_chat_app/presentation/bloc/bloc/chat_bloc.dart';
+import 'package:ai_chat_app/presentation/bloc/bloc/chat_list_bloc.dart';
+import 'package:ai_chat_app/presentation/bloc/event/chat_list_event.dart';
+import 'package:ai_chat_app/presentation/bloc/state/chat_list_state.dart';
 import 'package:ai_chat_app/presentation/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ActualChatScreen extends StatefulWidget {
   const ActualChatScreen({super.key});
@@ -11,11 +15,11 @@ class ActualChatScreen extends StatefulWidget {
 }
 
 class _ActualChatScreenState extends State<ActualChatScreen> {
-  final chatListController = ChatListController();
+  // final chatListController = ChatListController();
 
   @override
   void initState() {
-    chatListController.getAllChats();
+    context.read<ChatListBloc>().add(GetAllChatsEvent());
     super.initState();
   }
 
@@ -25,30 +29,45 @@ class _ActualChatScreenState extends State<ActualChatScreen> {
       appBar: AppBar(title: const Text('Actual Chat')),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          int chatId = await chatListController.createChat(
-            title: "New Chat - ${DateTime.now()}",
+          context.read<ChatListBloc>().add(
+            CreateChatEvent("New Chat - ${DateTime.now()}"),
           );
-          setState(() {});
+
+          final chatBloc = context.read<ChatBloc>();
+
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ChatScreen(chatId: chatId)),
+            MaterialPageRoute(
+              builder: (context) => BlocProvider.value(
+                value: chatBloc,
+                child: ChatScreen(
+                  chatId: context.read<ChatListBloc>().state.chats.last.chatId,
+                ),
+              ),
+            ),
           );
         },
         child: Icon(Icons.add),
       ),
-      body: FutureBuilder(
-        future: chatListController.getAllChats(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
+      body: BlocConsumer<ChatListBloc, ChatListState>(
+        listener: (context, state) {
+          if (state.error != null) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.error!)));
+          }
+        },
+        builder: (context, state) {
+          if (state.chats.isNotEmpty) {
             return ListView.builder(
-              itemCount: snapshot.data!.length,
+              itemCount: state.chats.length,
               itemBuilder: (context, index) {
-                return buildChatSystem(snapshot.data![index]);
+                return buildChatSystem(state.chats[index]);
               },
             );
-          } else if (snapshot.hasError) {
-            return Center(child: Text(snapshot.error.toString()));
-          } else if (snapshot.data?.isEmpty == true) {
+          } else if (state.error != null) {
+            return Center(child: Text(state.error.toString()));
+          } else if (state.chats.isEmpty) {
             return const Center(child: Text("No chats yet"));
           } else {
             return const Center(child: CircularProgressIndicator());
@@ -70,10 +89,22 @@ class _ActualChatScreenState extends State<ActualChatScreen> {
           leading: Icon(Icons.chat, size: 25, color: Colors.blue),
           trailing: Icon(Icons.delete),
           onTap: () {
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(
+            //     builder: (context) => ChatScreen(chatId: chat.chatId),
+            //   ),
+            // );
+
+            final chatBloc = context.read<ChatBloc>();
+
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ChatScreen(chatId: chat.chatId),
+                builder: (context) => BlocProvider.value(
+                  value: chatBloc, // 2. Pass it down to the new route branch
+                  child: ChatScreen(chatId: chat.chatId),
+                ),
               ),
             );
           },

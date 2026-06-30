@@ -2,6 +2,7 @@ import 'package:ai_chat_app/data/datasource/chat_system_api_source.dart';
 import 'package:ai_chat_app/database/services/message_services.dart';
 import 'package:ai_chat_app/domain/entities/single_chat.dart';
 import 'package:ai_chat_app/domain/repository/chat_repository.dart';
+import 'package:ai_chat_app/models/chat_message_model.dart';
 
 class ChatSystemRepo implements ChatRepository {
   final MessageServices db;
@@ -10,7 +11,7 @@ class ChatSystemRepo implements ChatRepository {
   ChatSystemRepo(this.db, this.chatSystemApiSource);
 
   @override
-  Future<String> sendMessage(List<Map<String, String>> messages) async {
+  Future<String> sendMessage(List<ChatMessage> messages) async {
     return await chatSystemApiSource.sendMessage(messages);
   }
 

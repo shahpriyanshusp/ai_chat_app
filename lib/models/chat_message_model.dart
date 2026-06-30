@@ -11,4 +11,11 @@ class ChatMessage {
   Map<String, dynamic> toMap() {
     return {'role': role, 'content': content};
   }
+
+  ChatMessage copyWith({String? role, String? content}) {
+    return ChatMessage(
+      role: role ?? this.role,
+      content: content ?? this.content,
+    );
+  }
 }

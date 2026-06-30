@@ -7,12 +7,41 @@ abstract class ChatEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class SendMessageEvent extends ChatEvent {
-  final String message;
-  const SendMessageEvent(this.message);
+class IntializedFirstAIMessage extends ChatEvent {
+  final int chatId;
+  const IntializedFirstAIMessage(this.chatId);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [chatId];
+}
+
+class SaveUserMessageEvent extends ChatEvent {
+  final String message;
+  final int chatId;
+  const SaveUserMessageEvent(this.message, this.chatId);
+
+  @override
+  List<Object?> get props => [message, chatId];
+}
+
+class SaveAIMessageEvent extends ChatEvent {
+  final String message;
+  final int chatId;
+  const SaveAIMessageEvent(this.message, this.chatId);
+
+  @override
+  List<Object?> get props => [message, chatId];
+}
+
+
+class SendUserMessageEvent extends ChatEvent {
+  final String message;
+  final int chatId;
+  // final List<Map<String, String>> messages;
+  const SendUserMessageEvent(this.message, this.chatId);
+
+  @override
+  List<Object?> get props => [message, chatId];
 }
 
 class ClearMessagesEvent extends ChatEvent {
@@ -31,25 +60,10 @@ class GetAllMessagesEvent extends ChatEvent {
   List<Object?> get props => [chatId];
 }
 
-class CreateChatEvent extends ChatEvent {
-  final String title;
-  const CreateChatEvent(this.title);
-
-  @override
-  List<Object?> get props => [title];
-}
-
 class DeleteChatEvent extends ChatEvent {
   final int chatId;
   const DeleteChatEvent(this.chatId);
 
   @override
   List<Object?> get props => [chatId];
-}
-
-class GetAllChatsEvent extends ChatEvent {
-  const GetAllChatsEvent();
-
-  @override
-  List<Object?> get props => [];
 }

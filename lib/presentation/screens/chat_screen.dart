@@ -3,7 +3,13 @@ import 'package:ai_chat_app/data/repository/chat_system_repo.dart';
 import 'package:ai_chat_app/database/services/message_services.dart';
 import 'package:ai_chat_app/domain/repository/chat_repository.dart';
 import 'package:ai_chat_app/domain/usecases/send_message.dart';
+import 'package:ai_chat_app/models/chat_message_model.dart';
+import 'package:ai_chat_app/presentation/bloc/bloc/chat_bloc.dart';
+import 'package:ai_chat_app/presentation/bloc/event/chat_event.dart';
+import 'package:ai_chat_app/presentation/bloc/state/chat_state.dart';
 import 'package:flutter/material.dart';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ChatScreen extends StatefulWidget {
   final int chatId;
@@ -15,100 +21,109 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController controller = TextEditingController();
-  late SendMessage sendMessageApi;
-  late ChatRepository chatRepository;
-  List<Map<String, String>> messages = [];
-  bool isResponseLoading = false;
+  // late SendMessage sendMessageApi;
+  // late ChatRepository chatRepository;
+  // List<Map<String, String>> messages = [];
+  // bool isResponseLoading = false;
 
   ScrollController scrollController = ScrollController();
 
-  late MessageServices db;
+  // late MessageServices db;
 
   @override
   void initState() {
     super.initState();
-    db = MessageServices();
-    chatRepository = ChatSystemRepo(db, ChatSystemApiSource());
-    sendMessageApi = SendMessage(chatRepository);
+    // db = MessageServices();
+    // chatRepository = ChatSystemRepo(db, ChatSystemApiSource());
+    // sendMessageApi = SendMessage(chatRepository);
 
-    loadMessagesFromDb();
+    // loadMessagesFromDb();
+
+    context.read<ChatBloc>().add(IntializedFirstAIMessage(widget.chatId));
   }
 
-  Future<void> loadMessagesFromDb() async {
-    final data = await db.getAllMessages(widget.chatId);
-
-    setState(() {
-      messages = data
-          .map((e) => {"role": e.role, "content": e.content})
-          .toList();
-    });
-
-    if (messages.isEmpty) {
-      initialMessage();
-    }
+  @override
+  void dispose() {
+    controller.dispose();
+    scrollController.dispose();
+    super.dispose();
   }
 
-  void initialMessage() async {
-    setState(() {
-      isResponseLoading = true;
-    });
+  // Future<void> loadMessagesFromDb() async {
+  //   final data = await db.getAllMessages(widget.chatId);
 
-    controller.clear();
+  //   setState(() {
+  //     messages = data
+  //         .map((e) => {"role": e.role, "content": e.content})
+  //         .toList();
+  //   });
 
-    String aiReply = await sendMessageApi.call([
-      {"role": "assistant", "content": "You are a helpful assistant"},
-    ]);
+  //   if (messages.isEmpty) {
+  //     initialMessage();
+  //   }
+  // }
 
-    setState(() {
-      messages.add({"role": "assistant", "content": aiReply});
-      isResponseLoading = false;
-    });
-  }
+  // void initialMessage() async {
+  //   setState(() {
+  //     isResponseLoading = true;
+  //   });
 
-  void sendMessage() async {
-    try {
-      if (controller.text.isEmpty) return;
+  //   controller.clear();
 
-      String userText = controller.text;
+  //   String aiReply = await sendMessageApi.call([
+  //     {"role": "assistant", "content": "You are a helpful assistant"},
+  //   ]);
 
-      // Save user message to DB
-      await db.insertMessage("user", userText, widget.chatId);
+  //   setState(() {
+  //     messages.add({"role": "assistant", "content": aiReply});
+  //     isResponseLoading = false;
+  //   });
+  // }
 
-      setState(() {
-        isResponseLoading = true;
-        messages.add({"role": "user", "content": userText});
-      });
+  // void sendMessage() async {
+  //   try {
+  //     if (controller.text.isEmpty) return;
 
-      controller.clear();
+  //     String userText = controller.text;
 
-      String aiReply = await sendMessageApi.call(messages);
+  //     // Save user message to DB
+  //     await db.insertMessage("user", userText, widget.chatId);
 
-      // Save user message to DB
-      await db.insertMessage("assistant", aiReply, widget.chatId);
+  //     setState(() {
+  //       isResponseLoading = true;
+  //       messages.add({"role": "user", "content": userText});
+  //     });
 
-      setState(() {
-        messages.add({"role": "assistant", "content": aiReply});
-        // isResponseLoading = false;
-      });
+  //     controller.clear();
 
-      // Simulate typing
-      await simulateTyping(aiReply);
+  //     String aiReply = await sendMessageApi.call(messages);
 
-      setState(() {
-        isResponseLoading = false;
-      });
+  //     // Save user message to DB
+  //     await db.insertMessage("assistant", aiReply, widget.chatId);
 
-      Future.delayed(Duration(milliseconds: 100), () {
-        scrollController.jumpTo(scrollController.position.maxScrollExtent);
-      });
-    } catch (exception) {
-      debugPrint(exception.toString());
-    }
-  }
+  //     setState(() {
+  //       messages.add({"role": "assistant", "content": aiReply});
+  //       // isResponseLoading = false;
+  //     });
 
-  Widget buildMessage(Map<String, String> msg) {
-    bool isUser = msg["role"] == "user";
-    bool isSystem = msg["role"] == "assistant";
+  //     // Simulate typing
+  //     await simulateTyping(aiReply);
+
+  //     setState(() {
+  //       isResponseLoading = false;
+  //     });
+
+  //     Future.delayed(Duration(milliseconds: 100), () {
+  //       scrollController.jumpTo(scrollController.position.maxScrollExtent);
+  //     });
+  //   } catch (exception) {
+  //     debugPrint(exception.toString());
+  //   }
+  // }
+
+  Widget buildMessage(ChatMessage msg) {
+    bool isUser = msg.role == "user";
+    bool isSystem = msg.role == "assistant";
 
     return Column(
       children: [
@@ -126,7 +141,7 @@ class _ChatScreenState extends State<ChatScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              msg["content"]!,
+              msg.content,
               style: TextStyle(color: isUser ? Colors.white : Colors.black),
             ),
           ),
@@ -137,19 +152,19 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Future<void> simulateTyping(String fullText) async {
-    String currentText = "";
+  // Future<void> simulateTyping(String fullText, ChatState state) async {
+  //   String currentText = "";
 
-    for (int i = 0; i < fullText.length; i++) {
-      await Future.delayed(Duration(milliseconds: 5));
+  //   for (int i = 0; i < fullText.length; i++) {
+  //     await Future.delayed(Duration(milliseconds: 5));
 
-      currentText += fullText[i];
+  //     currentText += fullText[i];
 
-      setState(() {
-        messages[messages.length - 1]["content"] = currentText;
-      });
-    }
-  }
+  //     setState(() {
+  //       messages[messages.length - 1]["content"] = currentText;
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -159,22 +174,24 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.delete),
-            onPressed: () async {
-              await db.clearMessages(widget.chatId);
-
-              setState(() {
-                messages.clear();
-              });
-            },
+            onPressed: () =>
+                context.read<ChatBloc>().add(DeleteChatEvent(widget.chatId)),
           ),
         ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              controller: scrollController,
-              children: messages.map(buildMessage).toList(),
+            child: BlocBuilder<ChatBloc, ChatState>(
+              builder: (context, state) {
+                return ListView.builder(
+                  controller: scrollController,
+                  itemCount: state.messages.length,
+                  itemBuilder: (context, index) {
+                    return buildMessage(state.messages[index]);
+                  },
+                );
+              },
             ),
           ),
           Row(
@@ -191,9 +208,26 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
               ),
-              isResponseLoading
-                  ? CircularProgressIndicator()
-                  : IconButton(icon: Icon(Icons.send), onPressed: sendMessage),
+              BlocBuilder<ChatBloc, ChatState>(
+                builder: (context, state) {
+                  return state.isLoading || state.isTyping
+                      ? const CircularProgressIndicator()
+                      : IconButton(
+                          icon: const Icon(Icons.send),
+                          onPressed: () {
+                            final text = controller.text.trim();
+
+                            if (text.isEmpty) return;
+
+                            context.read<ChatBloc>().add(
+                              SendUserMessageEvent(text, widget.chatId),
+                            );
+
+                            controller.clear();
+                          },
+                        );
+                },
+              ),
             ],
           ),
         ],

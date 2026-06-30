@@ -1,5 +1,7 @@
+import 'package:ai_chat_app/models/chat_message_model.dart';
+
 class ChatState {
-  final List<Map<String, String>> messages;
+  final List<ChatMessage> messages;
   final bool isTyping;
   final bool isLoading;
   final String? error;
@@ -12,7 +14,7 @@ class ChatState {
   });
 
   ChatState copyWith({
-    List<Map<String, String>>? messages,
+    List<ChatMessage>? messages,
     bool? isTyping,
     bool? isLoading,
     String? error,
